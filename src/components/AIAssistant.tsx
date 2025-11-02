@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { 
   ChatBubbleLeftRightIcon, 
   XMarkIcon, 
@@ -23,9 +23,14 @@ interface Message {
 interface AIAssistantProps {
   contractCode?: string
   onCodeInsert?: (code: string) => void
+  onAnalysisRequest?: (message: string) => void
 }
 
-export default function AIAssistant({ contractCode, onCodeInsert }: AIAssistantProps) {
+export interface AIAssistantRef {
+  sendAnalysisMessage: (message: string) => void
+}
+
+const AIAssistant = forwardRef<AIAssistantRef, AIAssistantProps>(({ contractCode, onCodeInsert }, ref) => {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -42,6 +47,18 @@ export default function AIAssistant({ contractCode, onCodeInsert }: AIAssistantP
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
+
+  // Expose sendAnalysisMessage function to parent
+  useImperativeHandle(ref, () => ({
+    sendAnalysisMessage: (message: string) => {
+      setInputMessage(message)
+      setIsOpen(true)
+      // Automatically send the message
+      setTimeout(() => {
+        sendMessage()
+      }, 100)
+    }
+  }))
 
   useEffect(() => {
     scrollToBottom()
@@ -257,4 +274,8 @@ export default function AIAssistant({ contractCode, onCodeInsert }: AIAssistantP
       )}
     </>
   )
-}
+})
+
+AIAssistant.displayName = 'AIAssistant'
+
+export default AIAssistant

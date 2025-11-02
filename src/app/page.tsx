@@ -1,15 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import CodeEditor from '@/components/CodeEditor'
 import ContractPanel from '@/components/ContractPanel'
 import AIAssistant from '@/components/AIAssistant'
 import WalletInput from '@/components/WalletInput'
 import WalletConnect from '@/components/WalletConnect'
 import NewFileModal from '@/components/NewFileModal'
+import CodeAnalysisMenu from '@/components/CodeAnalysisMenu'
 import { useToast } from '@/contexts/ToastContext'
 import { useContractDeploy } from '@/hooks/useContractDeploy'
 import { useAccount } from 'wagmi'
+import { AIAssistantRef } from '@/components/AIAssistant'
 
 const defaultContract = `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
@@ -46,6 +48,12 @@ export default function Home() {
   // Wallet hooks
   const { address, isConnected } = useAccount()
   const { deployContract, isDeploying, deploymentResult, error: deployError, reset } = useContractDeploy()
+  
+  // Code analysis states
+  const [selectedCode, setSelectedCode] = useState('')
+  const [showAnalysisMenu, setShowAnalysisMenu] = useState(false)
+  const [analysisMenuPosition, setAnalysisMenuPosition] = useState({ x: 0, y: 0 })
+  const aiAssistantRef = useRef<AIAssistantRef>(null)
   const [currentFileName, setCurrentFileName] = useState('MyContract.sol')
   const [isNewFileModalOpen, setIsNewFileModalOpen] = useState(false)
   const [openFiles, setOpenFiles] = useState<string[]>(['MyContract.sol'])
@@ -62,6 +70,50 @@ export default function Home() {
 
   const addTerminalLog = (message: string) => {
     setTerminalLogs(prev => [...prev, message])
+  }
+
+  const handleCodeSelection = (code: string) => {
+    if (code.trim().length > 10) { // Minimum kod uzunluğu
+      setSelectedCode(code)
+      
+      // Mouse pozisyonunu al
+      const handleMouseMove = (e: MouseEvent) => {
+        setAnalysisMenuPosition({ x: e.clientX + 10, y: e.clientY + 10 })
+        setShowAnalysisMenu(true)
+        document.removeEventListener('mousemove', handleMouseMove)
+      }
+      
+      document.addEventListener('mousemove', handleMouseMove)
+      
+      // 100ms sonra mouse listener'ı kaldır
+      setTimeout(() => {
+        document.removeEventListener('mousemove', handleMouseMove)
+      }, 100)
+    }
+  }
+
+  const handleCodeAnalysis = (type: 'explain' | 'security' | 'optimize', code: string) => {
+    let prompt = ''
+    
+    switch (type) {
+      case 'explain':
+        prompt = `Please explain this Solidity code in detail:\n\n\`\`\`solidity\n${code}\n\`\`\``
+        break
+      case 'security':
+        prompt = `Please analyze this Solidity code for security vulnerabilities and suggest improvements:\n\n\`\`\`solidity\n${code}\n\`\`\``
+        break
+      case 'optimize':
+        prompt = `Please suggest gas optimizations and improvements for this Solidity code:\n\n\`\`\`solidity\n${code}\n\`\`\``
+        break
+    }
+    
+    // AI Assistant'a mesaj gönder
+    if (aiAssistantRef.current) {
+      aiAssistantRef.current.sendAnalysisMessage(prompt)
+    }
+    
+    addTerminalLog(`$ Analyzing selected code (${type})...`)
+    showToast(`Analyzing code for ${type}...`, 'info')
   }
 
   return (
@@ -182,7 +234,7 @@ export default function Home() {
           {/* Editor Area */}
           <div className="flex-1 flex">
             {/* Code Editor */}
-            <div className="flex-1 bg-[#1e1e1e]">
+            <div className="flex-1 bg-[#1e1e1e] relative">
               <CodeEditor
                 value={fileContents[currentFileName] || ''}
                 onChange={(newCode) => {
@@ -194,7 +246,24 @@ export default function Home() {
                 }}
                 language="solidity"
                 height="calc(100vh - 120px)"
+                onCodeSelection={handleCodeSelection}
+                onCursorPositionChange={(line, column) => {
+                  setCursorPosition({ line, column })
+                }}
               />
+              
+              {/* Code Analysis Menu */}
+              {showAnalysisMenu && selectedCode && (
+                <CodeAnalysisMenu
+                  selectedCode={selectedCode}
+                  position={analysisMenuPosition}
+                  onAnalyze={handleCodeAnalysis}
+                  onClose={() => {
+                    setShowAnalysisMenu(false)
+                    setSelectedCode('')
+                  }}
+                />
+              )}
             </div>
 
             {/* Right Panel */}
@@ -412,6 +481,7 @@ contract ${fileName} {
 
       {/* AI Assistant */}
       <AIAssistant 
+        ref={aiAssistantRef}
         contractCode={contractCode} 
         onCodeInsert={(code) => {
           setContractCode(code)

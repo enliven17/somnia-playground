@@ -9,6 +9,7 @@ interface CodeEditorProps {
   language?: string
   height?: string
   onCursorPositionChange?: (line: number, column: number) => void
+  onCodeSelection?: (selectedCode: string) => void
 }
 
 export default function CodeEditor({ 
@@ -16,12 +17,34 @@ export default function CodeEditor({
   onChange, 
   language = 'solidity',
   height = '500px',
-  onCursorPositionChange
+  onCursorPositionChange,
+  onCodeSelection
 }: CodeEditorProps) {
   const editorRef = useRef<any>(null)
 
   function handleEditorDidMount(editor: any, monaco: any) {
     editorRef.current = editor
+
+    // Add selection change listener
+    editor.onDidChangeCursorSelection((e: any) => {
+      if (onCursorPositionChange) {
+        const position = editor.getPosition()
+        if (position) {
+          onCursorPositionChange(position.lineNumber, position.column)
+        }
+      }
+
+      // Handle code selection
+      if (onCodeSelection) {
+        const selection = editor.getSelection()
+        if (selection && !selection.isEmpty()) {
+          const selectedText = editor.getModel()?.getValueInRange(selection)
+          if (selectedText && selectedText.trim().length > 0) {
+            onCodeSelection(selectedText)
+          }
+        }
+      }
+    })
 
     // Configure Solidity language support
     monaco.languages.register({ id: 'solidity' })
