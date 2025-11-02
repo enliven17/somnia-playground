@@ -411,7 +411,17 @@ contract ${fileName} {
       />
 
       {/* AI Assistant */}
-      <AIAssistant contractCode={contractCode} />
+      <AIAssistant 
+        contractCode={contractCode} 
+        onCodeInsert={(code) => {
+          setContractCode(code)
+          setFileContents(prev => ({
+            ...prev,
+            [currentFileName]: code
+          }))
+          showToast('Code inserted from AI Assistant!', 'success')
+        }}
+      />
     </div>
   )
 }

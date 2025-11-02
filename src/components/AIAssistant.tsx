@@ -6,7 +6,10 @@ import {
   XMarkIcon, 
   PaperAirplaneIcon,
   SparklesIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  CodeBracketIcon,
+  PlusIcon,
+  MinusIcon
 } from '@heroicons/react/24/outline'
 
 interface Message {
@@ -14,13 +17,15 @@ interface Message {
   type: 'user' | 'assistant'
   content: string
   timestamp: Date
+  hasCode?: boolean
 }
 
 interface AIAssistantProps {
   contractCode?: string
+  onCodeInsert?: (code: string) => void
 }
 
-export default function AIAssistant({ contractCode }: AIAssistantProps) {
+export default function AIAssistant({ contractCode, onCodeInsert }: AIAssistantProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -57,25 +62,28 @@ export default function AIAssistant({ contractCode }: AIAssistantProps) {
     setIsLoading(true)
 
     try {
-      const response = await fetch('/api/ai-assistant', {
+      const response = await fetch('/api/gemini-assistant', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           message: inputMessage,
-          contractCode,
-          conversationHistory: messages.slice(-5) // Son 5 mesajı gönder
+          contractCode
         }),
       })
 
       const data = await response.json()
 
+      // Check if response contains Solidity code
+      const hasCode = data.response && data.response.includes('```solidity')
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
         content: data.response || 'Sorry, I encountered an error. Please try again.',
-        timestamp: new Date()
+        timestamp: new Date(),
+        hasCode
       }
 
       setMessages(prev => [...prev, assistantMessage])
@@ -99,11 +107,27 @@ export default function AIAssistant({ contractCode }: AIAssistantProps) {
     }
   }
 
+  const extractSolidityCode = (content: string): string | null => {
+    const codeMatch = content.match(/```solidity\n([\s\S]*?)\n```/)
+    return codeMatch ? codeMatch[1] : null
+  }
+
+  const insertCodeToEditor = (content: string) => {
+    const code = extractSolidityCode(content)
+    if (code && onCodeInsert) {
+      onCodeInsert(code)
+    }
+  }
+
   const quickActions = [
+    { text: 'Write a simple ERC20 token contract', icon: CodeBracketIcon },
+    { text: 'Create a basic NFT contract', icon: CodeBracketIcon },
     { text: 'Explain this contract', icon: DocumentTextIcon },
     { text: 'How to deploy on Somnia?', icon: SparklesIcon },
     { text: 'Gas optimization tips', icon: SparklesIcon },
     { text: 'Security best practices', icon: SparklesIcon },
+    { text: 'Write a voting contract', icon: CodeBracketIcon },
+    { text: 'Create a multi-signature wallet', icon: CodeBracketIcon },
   ]
 
   return (
@@ -145,16 +169,31 @@ export default function AIAssistant({ contractCode }: AIAssistantProps) {
                   className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] p-3 rounded-2xl text-sm ${
+                    className={`max-w-[80%] ${
                       message.type === 'user'
                         ? 'bg-blue-500 text-white'
                         : 'bg-[#2d2d30] text-white border border-white/10'
-                    }`}
+                    } rounded-2xl overflow-hidden`}
                   >
-                    <p className="whitespace-pre-wrap">{message.content}</p>
-                    <p className="text-xs opacity-60 mt-1">
-                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
+                    <div className="p-3">
+                      <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+                      <p className="text-xs opacity-60 mt-1">
+                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                    
+                    {/* Code Insert Button */}
+                    {message.type === 'assistant' && message.hasCode && onCodeInsert && (
+                      <div className="border-t border-white/10 p-2">
+                        <button
+                          onClick={() => insertCodeToEditor(message.content)}
+                          className="flex items-center space-x-2 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                        >
+                          <PlusIcon className="h-3 w-3" />
+                          <span>Insert code to editor</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -175,17 +214,17 @@ export default function AIAssistant({ contractCode }: AIAssistantProps) {
 
             {/* Quick Actions */}
             {messages.length === 1 && (
-              <div className="p-4 border-t border-white/10">
+              <div className="p-4 border-t border-white/10 max-h-48 overflow-y-auto">
                 <p className="text-white/60 text-xs mb-2">Quick actions:</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
                   {quickActions.map((action, index) => (
                     <button
                       key={index}
                       onClick={() => setInputMessage(action.text)}
-                      className="text-left p-2 bg-[#2d2d30] hover:bg-[#3e3e42] rounded-lg text-xs text-white/80 hover:text-white transition-colors border border-white/10"
+                      className="w-full text-left p-2 bg-[#2d2d30] hover:bg-[#3e3e42] rounded-lg text-xs text-white/80 hover:text-white transition-colors border border-white/10 flex items-center space-x-2"
                     >
-                      <action.icon className="h-3 w-3 inline mr-1" />
-                      {action.text}
+                      <action.icon className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{action.text}</span>
                     </button>
                   ))}
                 </div>
