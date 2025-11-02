@@ -152,17 +152,27 @@ const AIAssistant = forwardRef<AIAssistantRef, AIAssistantProps>(({ contractCode
       {/* AI Assistant Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center z-50 hover:scale-110"
+        className="fixed bottom-6 right-6 w-11 h-11 bg-[#2d2d30] hover:bg-[#3e3e42] border border-white/10 hover:border-white/20 text-white/80 hover:text-white rounded-lg transition-all duration-200 flex items-center justify-center z-50 group"
+        style={{
+          boxShadow: '0 0 20px rgba(139, 92, 246, 0.15), 0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          transition: 'box-shadow 0.2s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow = '0 0 25px rgba(139, 92, 246, 0.25), 0 8px 15px -3px rgba(0, 0, 0, 0.1)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = '0 0 20px rgba(139, 92, 246, 0.15), 0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+        }}
       >
-        <SparklesIcon className="h-6 w-6" />
+        <SparklesIcon className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
       </button>
 
       {/* AI Assistant Panel */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-end p-4">
-          <div className="w-[450px] h-[700px] bg-[#1e1e1e] border border-white/20 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+          <div className="w-[420px] h-[650px] bg-[#1e1e1e] border border-white/10 rounded-xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-sm">
             {/* Header */}
-            <div className="bg-gradient-to-r from-purple-500 to-blue-500 p-2 flex items-center justify-between">
+            <div className="bg-[#2d2d30] border-b border-white/10 p-3 flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <SparklesIcon className="h-4 w-4 text-white" />
                 <div>
@@ -179,22 +189,22 @@ const AIAssistant = forwardRef<AIAssistantRef, AIAssistantProps>(({ contractCode
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-3 space-y-3">
               {messages.map((message) => (
                 <div
                   key={message.id}
                   className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] ${
+                    className={`max-w-[85%] ${
                       message.type === 'user'
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-[#2d2d30] text-white border border-white/10'
-                    } rounded-2xl overflow-hidden`}
+                        ? 'bg-[#007acc] text-white'
+                        : 'bg-[#252526] text-white border border-white/5'
+                    } rounded-lg overflow-hidden`}
                   >
-                    <div className="p-3">
-                      <p className="whitespace-pre-wrap text-sm">{message.content}</p>
-                      <p className="text-xs opacity-60 mt-1">
+                    <div className="p-2.5">
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
+                      <p className="text-xs opacity-50 mt-1.5">
                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
@@ -217,11 +227,11 @@ const AIAssistant = forwardRef<AIAssistantRef, AIAssistantProps>(({ contractCode
               
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-[#2d2d30] text-white border border-white/10 p-3 rounded-2xl">
+                  <div className="bg-[#252526] text-white border border-white/5 p-2.5 rounded-lg">
                     <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce"></div>
+                      <div className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                     </div>
                   </div>
                 </div>
@@ -231,16 +241,16 @@ const AIAssistant = forwardRef<AIAssistantRef, AIAssistantProps>(({ contractCode
 
             {/* Quick Actions */}
             {messages.length === 1 && (
-              <div className="p-4 border-t border-white/10 max-h-48 overflow-y-auto">
-                <p className="text-white/60 text-xs mb-2">Quick actions:</p>
+              <div className="p-3 border-t border-white/5 max-h-44 overflow-y-auto">
+                <p className="text-white/50 text-xs mb-2 font-medium">Quick actions</p>
                 <div className="space-y-1">
                   {quickActions.map((action, index) => (
                     <button
                       key={index}
                       onClick={() => setInputMessage(action.text)}
-                      className="w-full text-left p-2 bg-[#2d2d30] hover:bg-[#3e3e42] rounded-lg text-xs text-white/80 hover:text-white transition-colors border border-white/10 flex items-center space-x-2"
+                      className="w-full text-left p-2 bg-[#252526] hover:bg-[#2d2d30] rounded-md text-xs text-white/70 hover:text-white/90 transition-all duration-150 border border-white/5 hover:border-white/10 flex items-center space-x-2"
                     >
-                      <action.icon className="h-3 w-3 flex-shrink-0" />
+                      <action.icon className="h-3 w-3 flex-shrink-0 opacity-60" />
                       <span className="truncate">{action.text}</span>
                     </button>
                   ))}
@@ -249,7 +259,7 @@ const AIAssistant = forwardRef<AIAssistantRef, AIAssistantProps>(({ contractCode
             )}
 
             {/* Input */}
-            <div className="p-4 border-t border-white/10">
+            <div className="p-3 border-t border-white/5">
               <div className="flex space-x-2">
                 <input
                   type="text"
@@ -257,13 +267,13 @@ const AIAssistant = forwardRef<AIAssistantRef, AIAssistantProps>(({ contractCode
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Ask me anything about Somnia..."
-                  className="flex-1 bg-[#2d2d30] text-white placeholder-white/50 border border-white/20 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                  className="flex-1 bg-[#252526] text-white placeholder-white/40 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#007acc] focus:bg-[#2d2d30] transition-all"
                   disabled={isLoading}
                 />
                 <button
                   onClick={sendMessage}
                   disabled={!inputMessage.trim() || isLoading}
-                  className="bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white p-2 rounded-lg transition-colors"
+                  className="bg-[#007acc] hover:bg-[#005a9e] disabled:opacity-40 disabled:cursor-not-allowed text-white p-2 rounded-md transition-colors"
                 >
                   <PaperAirplaneIcon className="h-4 w-4" />
                 </button>
