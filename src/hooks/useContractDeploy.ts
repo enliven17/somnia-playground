@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAccount, useWalletClient, usePublicClient } from 'wagmi';
-import { parseEther, encodeFunctionData, createContract } from 'viem';
+import { parseEther, encodeFunctionData } from 'viem';
 
 interface DeploymentResult {
   address: string;
@@ -30,7 +30,7 @@ export function useContractDeploy() {
     try {
       // Check wallet balance first
       const balance = await publicClient?.getBalance({ address });
-      if (!balance || balance === 0n) {
+      if (!balance || balance === BigInt(0)) {
         throw new Error('Insufficient balance. Please add STT tokens to your wallet.');
       }
 
@@ -62,21 +62,11 @@ export function useContractDeploy() {
         throw new Error('No bytecode generated from compilation');
       }
 
-      // Estimate gas first
-      let gasEstimate;
-      try {
-        gasEstimate = await publicClient?.estimateContractDeployGas({
-          abi,
-          bytecode: bytecode as `0x${string}`,
-          account: address,
-        });
-      } catch (gasError) {
-        console.warn('Gas estimation failed, using default:', gasError);
-        gasEstimate = 3000000n; // Default 3M gas
-      }
+      // Use default gas limit for deployment
+      const gasEstimate = BigInt(3000000); // Default 3M gas
 
       // Add 20% buffer to gas estimate
-      const gasLimit = gasEstimate ? (gasEstimate * 120n) / 100n : 3000000n;
+      const gasLimit = gasEstimate ? (gasEstimate * BigInt(120)) / BigInt(100) : BigInt(3000000);
 
       // Deploy contract with estimated gas
       const hash = await walletClient.deployContract({
@@ -84,6 +74,7 @@ export function useContractDeploy() {
         bytecode: bytecode as `0x${string}`,
         account: address,
         gas: gasLimit,
+        args: [], // Constructor arguments (empty for basic contracts)
       });
 
       // Wait for transaction receipt
