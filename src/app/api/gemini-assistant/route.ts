@@ -141,7 +141,13 @@ Current context:
 - RPC: https://dream-rpc.somnia.network
 - Explorer: https://shannon-explorer.somnia.network/
 
-IMPORTANT: When user asks you to write or generate a smart contract, provide COMPLETE, WORKING Solidity code that can be directly used in the Monaco editor. Include proper SPDX license, pragma directive, and all necessary functions.
+IMPORTANT CODING RULES:
+1. You CAN use OpenZeppelin imports (@openzeppelin/contracts) - they are fully supported
+2. For ERC20 tokens, prefer using OpenZeppelin's ERC20 implementation
+3. For access control, use OpenZeppelin's Ownable or AccessControl
+4. Include proper SPDX license, pragma directive, and all necessary functions
+5. Use modern Solidity best practices and OpenZeppelin standards
+6. Always use the latest stable versions of OpenZeppelin contracts
 
 ${contractCode ? `\nCurrent contract code:\n\`\`\`solidity\n${contractCode}\n\`\`\`` : ''}
 

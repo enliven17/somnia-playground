@@ -137,13 +137,13 @@ const AIAssistant = forwardRef<AIAssistantRef, AIAssistantProps>(({ contractCode
   }
 
   const quickActions = [
-    { text: 'Write a simple ERC20 token contract', icon: CodeBracketIcon },
-    { text: 'Create a basic NFT contract', icon: CodeBracketIcon },
+    { text: 'Write a simple ERC20 token with OpenZeppelin', icon: CodeBracketIcon },
+    { text: 'Create a basic NFT (ERC721) contract', icon: CodeBracketIcon },
     { text: 'Explain this contract', icon: DocumentTextIcon },
     { text: 'How to deploy on Somnia?', icon: SparklesIcon },
     { text: 'Gas optimization tips', icon: SparklesIcon },
     { text: 'Security best practices', icon: SparklesIcon },
-    { text: 'Write a voting contract', icon: CodeBracketIcon },
+    { text: 'Write a voting contract with OpenZeppelin', icon: CodeBracketIcon },
     { text: 'Create a multi-signature wallet', icon: CodeBracketIcon },
   ]
 
@@ -162,19 +162,19 @@ const AIAssistant = forwardRef<AIAssistantRef, AIAssistantProps>(({ contractCode
         <div className="fixed inset-0 z-50 flex items-end justify-end p-4">
           <div className="w-[450px] h-[700px] bg-[#1e1e1e] border border-white/20 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="bg-gradient-to-r from-purple-500 to-blue-500 p-4 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <SparklesIcon className="h-6 w-6 text-white" />
+            <div className="bg-gradient-to-r from-purple-500 to-blue-500 p-2 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <SparklesIcon className="h-4 w-4 text-white" />
                 <div>
-                  <h3 className="text-white font-semibold">AI Assistant</h3>
+                  <h3 className="text-white font-medium text-sm">AI Assistant</h3>
                   <p className="text-white/80 text-xs">Somnia Expert</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-white/80 hover:text-white transition-colors"
+                className="text-white/80 hover:text-white transition-colors p-1"
               >
-                <XMarkIcon className="h-5 w-5" />
+                <XMarkIcon className="h-4 w-4" />
               </button>
             </div>
 
