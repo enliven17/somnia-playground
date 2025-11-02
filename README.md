@@ -1,146 +1,174 @@
 # Somnia Playground
 
-A smart contract playground developed for Somnia Testnet. Users can write, compile, and deploy smart contracts to Somnia testnet.
+A web-based development environment for Solidity smart contracts on the Somnia blockchain testnet. Provides compilation, deployment, and AI-assisted development tools.
 
-## Features
+## Architecture
 
-- 🔧 **Smart Contract Editor**: Solidity syntax highlighting with Monaco Editor
-- ⚡ **Fast Compilation**: Automatic contract compilation with Hardhat
-- 🚀 **Testnet Deploy**: One-click deployment to Somnia testnet
-- 🔍 **Explorer Integration**: View deployed contracts in the explorer
-- 📱 **Responsive Design**: Mobile and desktop compatible interface
+```mermaid
+graph TB
+    A[Web Interface] --> B[Monaco Editor]
+    A --> C[Contract Panel]
+    A --> D[AI Assistant]
+    
+    B --> E[Solidity Compiler API]
+    C --> F[Wallet Integration]
+    C --> G[Deployment Engine]
+    D --> H[Gemini AI API]
+    
+    F --> I[RainbowKit/WalletConnect]
+    F --> J[Private Key Input]
+    
+    G --> K[Somnia Testnet]
+    E --> L[Remix Compiler API]
+    
+    K --> M[Shannon Explorer]
+    
+    subgraph "Blockchain Layer"
+        K
+        M
+    end
+    
+    subgraph "External APIs"
+        H
+        L
+    end
+```
+
+## System Components
+
+### Frontend Architecture
+- **Next.js 14**: React framework with App Router
+- **TypeScript**: Type-safe development
+- **Tailwind CSS**: Utility-first styling
+- **Monaco Editor**: VS Code editor integration
+
+### Blockchain Integration
+- **ethers.js v6**: Ethereum library for contract interaction
+- **RainbowKit**: Wallet connection interface
+- **wagmi**: React hooks for Ethereum
+- **viem**: TypeScript Ethereum library
+
+### AI Integration
+- **Gemini API**: Google's generative AI for code assistance
+- **Code Analysis**: Real-time contract review and suggestions
+- **Context-Aware**: Understands Somnia-specific development patterns
+
+## Network Configuration
+
+### Somnia Testnet Parameters
+```javascript
+{
+  chainId: 50312,
+  name: "Somnia Testnet",
+  rpcUrl: "https://dream-rpc.somnia.network",
+  blockExplorer: "https://shannon-explorer.somnia.network",
+  nativeCurrency: {
+    name: "STT",
+    symbol: "STT",
+    decimals: 18
+  }
+}
+```
 
 ## Installation
 
-1. **Clone the repository:**
+### Prerequisites
+- Node.js 18.0 or higher
+- npm or yarn package manager
+
+### Setup Process
 ```bash
+# Clone repository
 git clone <repository-url>
 cd somnia-playground
-```
 
-2. **Install dependencies:**
-```bash
+# Install dependencies
 npm install
-```
 
-3. **Create environment file:**
-```bash
-cp .env.example .env.local
-```
+# Configure environment
+cp .env.local.example .env.local
 
-4. **Add your private key:**
-Replace the `PRIVATE_KEY` variable in `.env.local` with your own private key.
-
-⚠️ **Security Warning**: Only use a private key from a wallet intended for testnet use!
-
-## Somnia Testnet Setup
-
-### Adding Somnia Testnet to MetaMask
-
-1. Open MetaMask
-2. Select "Add Network" from the network dropdown
-3. Enter the following information:
-
-```
-Network Name: Somnia Testnet
-RPC URL: https://dream-rpc.somnia.network
-Chain ID: 50311
-Currency Symbol: STT
-Block Explorer: https://shannon-explorer.somnia.network
-```
-
-### Getting Test Tokens
-
-To get Somnia testnet tokens:
-1. Visit the [Somnia Faucet](https://faucet.somnia.network)
-2. Enter your wallet address
-3. Request test tokens
-4. Or check the [official documentation](https://docs.somnia.network/)
-
-## Usage
-
-1. **Start the development server:**
-```bash
+# Start development server
 npm run dev
 ```
 
-2. **Open in browser:**
-http://localhost:3000
+### Environment Configuration
+```env
+# Blockchain Network
+NEXT_PUBLIC_CHAIN_ID=50312
+NEXT_PUBLIC_RPC_URL=https://dream-rpc.somnia.network
+NEXT_PUBLIC_EXPLORER_URL=https://shannon-explorer.somnia.network
 
-3. **Write Smart Contract:**
-- Write your contract code in the left panel
-- Example templates are available
+# AI Integration
+GEMINI_API_KEY=your_gemini_api_key
 
-4. **Compile:**
-- Click the "Compile" button
-- Check for errors
+# Wallet Integration
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id
 
-5. **Deploy:**
-- Switch to the "Deploy" tab
-- Click the "Deploy" button
-- Get the contract address and transaction hash
-
-## Example Contracts
-
-### Simple Token Contract
-```solidity
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
-
-contract SimpleToken {
-    string public name = "My Token";
-    string public symbol = "MTK";
-    uint256 public totalSupply = 1000000;
-    
-    mapping(address => uint256) public balanceOf;
-    
-    constructor() {
-        balanceOf[msg.sender] = totalSupply;
-    }
-    
-    function transfer(address to, uint256 amount) public returns (bool) {
-        require(balanceOf[msg.sender] >= amount, "Insufficient balance");
-        balanceOf[msg.sender] -= amount;
-        balanceOf[to] += amount;
-        return true;
-    }
-}
+# Optional: Server-side deployment
+PRIVATE_KEY=your_private_key
 ```
 
-### Somnia Score Contract
-```solidity
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+## Core Features
 
-contract SomniaScore {
-    mapping(address => uint256) public somniaScores;
-    address public owner;
+### Smart Contract Development
+- **Syntax Highlighting**: Solidity language support with Monaco Editor
+- **Real-time Compilation**: Integrated Solidity compiler with error reporting
+- **OpenZeppelin Support**: Import and use OpenZeppelin contracts
+- **Template Library**: Pre-built contract templates
+
+### Deployment Options
+```mermaid
+graph LR
+    A[Contract Code] --> B{Compilation}
+    B -->|Success| C[Deployment Options]
+    B -->|Error| D[Error Display]
     
-    constructor() {
-        owner = msg.sender;
-    }
+    C --> E[Wallet Connection]
+    C --> F[Private Key]
     
-    function updateScore(address user, uint256 score) public {
-        require(msg.sender == owner, "Only owner");
-        require(score <= 1000, "Score too high");
-        somniaScores[user] = score;
-    }
+    E --> G[MetaMask/WalletConnect]
+    F --> H[Manual Key Input]
     
-    function getScore(address user) public view returns (uint256) {
-        return somniaScores[user];
-    }
-}
+    G --> I[Somnia Testnet]
+    H --> I
+    
+    I --> J[Transaction Hash]
+    I --> K[Contract Address]
+```
+
+### AI Assistant Capabilities
+- **Code Generation**: Create complete smart contracts
+- **Code Analysis**: Security and optimization reviews
+- **Documentation**: Explain contract functionality
+- **Somnia-Specific**: Network-aware development guidance
+
+### Code Analysis Features
+```mermaid
+graph TD
+    A[Code Selection] --> B[Analysis Menu]
+    B --> C[Explain Code]
+    B --> D[Security Analysis]
+    B --> E[Optimize Code]
+    
+    C --> F[AI Assistant]
+    D --> F
+    E --> F
+    
+    F --> G[Detailed Response]
+    G --> H[Code Suggestions]
 ```
 
 ## API Endpoints
 
-### POST /api/compile
-Contract kodunu derler.
+### Contract Compilation
+```http
+POST /api/compile
+Content-Type: application/json
 
-**Request:**
-```json
 {
-  "code": "contract MyContract { ... }"
+  "source": "pragma solidity ^0.8.19; contract Example {}",
+  "contractName": "Example"
 }
 ```
 
@@ -149,107 +177,218 @@ Contract kodunu derler.
 {
   "success": true,
   "abi": [...],
-  "bytecode": "0x...",
-  "output": "compilation output"
+  "bytecode": "0x608060405...",
+  "contractName": "Example"
 }
 ```
 
-### POST /api/deploy
-Derlenmiş contractı deploy eder.
+### Contract Deployment
+```http
+POST /api/deploy
+Content-Type: application/json
 
-**Request:**
-```json
 {
-  "bytecode": "0x...",
-  "abi": [...]
+  "bytecode": "0x608060405...",
+  "abi": [...],
+  "privateKey": "0x..."
 }
 ```
 
-**Response:**
-```json
+### AI Assistant
+```http
+POST /api/gemini-assistant
+Content-Type: application/json
+
 {
-  "success": true,
-  "contractAddress": "0x...",
-  "transactionHash": "0x...",
-  "networkInfo": {
-    "chainId": 50311,
-    "explorerUrl": "https://shannon-explorer.somnia.network/address/0x..."
-  }
+  "message": "Write an ERC20 token contract",
+  "contractCode": "existing code context"
 }
 ```
 
-## Teknoloji Stack
+## Development Workflow
 
-- **Frontend**: Next.js 14, React 18, TypeScript
-- **Styling**: Tailwind CSS
-- **Editor**: Monaco Editor
-- **Blockchain**: Ethers.js v6
-- **Smart Contracts**: Hardhat, Solidity 0.8.19
-- **Network**: Somnia Testnet
+### Contract Development Process
+```mermaid
+sequenceDiagram
+    participant D as Developer
+    participant E as Editor
+    participant C as Compiler
+    participant W as Wallet
+    participant N as Network
+    
+    D->>E: Write Contract
+    E->>C: Compile Request
+    C->>E: Compilation Result
+    E->>D: Display Errors/Success
+    
+    alt Wallet Connected
+        D->>W: Deploy Request
+        W->>N: Send Transaction
+    else Private Key
+        D->>N: Direct Deployment
+    end
+    
+    N->>D: Contract Address
+```
 
-## Development
+### AI-Assisted Development
+```mermaid
+graph LR
+    A[Developer Query] --> B[AI Processing]
+    B --> C[Code Generation]
+    B --> D[Code Analysis]
+    B --> E[Documentation]
+    
+    C --> F[Insert to Editor]
+    D --> G[Suggestions Panel]
+    E --> H[Explanation View]
+```
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── api/
+│   │   ├── compile/          # Solidity compilation
+│   │   ├── deploy/           # Contract deployment
+│   │   ├── gemini-assistant/ # AI integration
+│   │   └── list-models/      # Available AI models
+│   ├── globals.css           # Global styles
+│   ├── layout.tsx            # Root layout
+│   └── page.tsx              # Main application
+├── components/
+│   ├── AIAssistant.tsx       # AI chat interface
+│   ├── CodeAnalysisMenu.tsx  # Code selection analysis
+│   ├── CodeEditor.tsx        # Monaco editor wrapper
+│   ├── ContractPanel.tsx     # Compilation/deployment UI
+│   ├── Providers.tsx         # Context providers
+│   └── WalletConnect.tsx     # Wallet integration
+├── hooks/
+│   └── useContractDeploy.ts  # Deployment logic
+└── lib/
+    └── wagmi.ts              # Blockchain configuration
+```
+
+## Smart Contract Templates
+
+### ERC20 Token with OpenZeppelin
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract SomniaToken is ERC20, Ownable {
+    constructor() ERC20("Somnia Token", "SOM") {
+        _mint(msg.sender, 1000000 * 10**decimals());
+    }
+    
+    function mint(address to, uint256 amount) public onlyOwner {
+        _mint(to, amount);
+    }
+}
+```
+
+### NFT Contract
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract SomniaNFT is ERC721, Ownable {
+    uint256 private _tokenIdCounter;
+    
+    constructor() ERC721("Somnia NFT", "SNFT") {}
+    
+    function safeMint(address to) public onlyOwner {
+        uint256 tokenId = _tokenIdCounter++;
+        _safeMint(to, tokenId);
+    }
+}
+```
+
+## Testing and Deployment
 
 ### Local Development
 ```bash
-# Development server
+# Start development server
 npm run dev
 
-# Contract compilation
-npm run compile
+# Build for production
+npm run build
 
-# Contract deploy (testnet)
-npm run deploy
-
-# Linting
-npm run lint
+# Start production server
+npm start
 ```
 
-### Adding New Features
+### Contract Testing
+```bash
+# Compile contracts
+npm run compile
 
-1. Create new components in `src/components/`
-2. Add new API endpoints in `src/app/api/`
-3. Update type definitions in `src/types/`
+# Run tests
+npm run test
+
+# Deploy to testnet
+npm run deploy
+```
+
+## Security Considerations
+
+### Private Key Management
+- Never commit private keys to version control
+- Use environment variables for sensitive data
+- Consider hardware wallets for production
+
+### Smart Contract Security
+- Use OpenZeppelin audited contracts
+- Implement proper access controls
+- Test thoroughly before mainnet deployment
+- Consider professional audits for production contracts
+
+## Performance Optimization
+
+### Frontend Optimization
+- Code splitting with Next.js
+- Lazy loading of components
+- Optimized bundle size
+
+### Blockchain Interaction
+- Gas estimation before deployment
+- Transaction batching where applicable
+- Efficient contract design patterns
 
 ## Troubleshooting
 
-### Compilation Error
-- Check Solidity syntax
-- Ensure pragma version is correct
-- Check import paths
+### Common Issues
+1. **Compilation Errors**: Check Solidity version compatibility
+2. **Deployment Failures**: Verify network configuration and gas settings
+3. **Wallet Connection**: Ensure correct network is selected
+4. **AI Assistant**: Verify API key configuration
 
-### Deployment Error
-- Ensure private key is correct
-- Check that wallet has sufficient STT tokens
-- Check network connection
-
-### MetaMask Connection Issue
-- Check network settings
-- Ensure Chain ID is 50311
-- Verify RPC URL is correct
+### Debug Information
+- Check browser console for errors
+- Monitor network requests in developer tools
+- Verify environment variable configuration
 
 ## Contributing
 
+### Development Guidelines
+1. Follow TypeScript best practices
+2. Maintain component modularity
+3. Write comprehensive tests
+4. Document API changes
+
+### Pull Request Process
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create feature branch
+3. Implement changes with tests
+4. Submit pull request with description
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
-
-## Links
-
-- [Somnia Official Website](https://somnia.network/)
-- [Somnia Documentation](https://docs.somnia.network/)
-- [Somnia Explorer](https://shannon-explorer.somnia.network/)
-- [Somnia Discord](https://discord.gg/somnia)
-- [Somnia Faucet](https://faucet.somnia.network)
-
-## Support
-
-For questions:
-- Open GitHub Issues
-- Join Discord channel
-- Check documentation
+MIT License - see LICENSE file for details.
