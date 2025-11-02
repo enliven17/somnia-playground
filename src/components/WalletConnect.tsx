@@ -63,10 +63,10 @@ export default function WalletConnect() {
                       <button
                         onClick={openConnectModal}
                         type="button"
-                        className="btn-primary flex items-center space-x-2"
+                        className="flex items-center space-x-1 bg-somnia-500 hover:bg-somnia-600 text-white font-medium py-1.5 px-2.5 rounded-md transition-colors text-xs"
                       >
-                        <WalletIcon className="h-4 w-4" />
-                        <span>Connect Wallet</span>
+                        <WalletIcon className="h-3 w-3" />
+                        <span>Connect</span>
                       </button>
                     );
                   }
