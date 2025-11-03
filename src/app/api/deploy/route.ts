@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
     // Best-effort on-chain registration with the PlaygroundRegistry
     // Signed by treasury (server), not by end-user wallet
     const registryEnv = process.env.NEXT_PUBLIC_REGISTRY_ADDRESS || process.env.REGISTRY_ADDRESS || REGISTRY_ADDRESS
+    let registryTxHash: string | undefined
     if (registryEnv) {
       try {
         const treasuryPk = process.env.TREASURY_PRIVATE_KEY || process.env.REGISTRY_SIGNER_PRIVATE_KEY
@@ -98,7 +99,8 @@ export async function POST(request: NextRequest) {
               maxPriorityFeePerGas,
               maxFeePerGas,
             })
-          await regTx.wait()
+            const regReceipt = await regTx.wait()
+            registryTxHash = regReceipt?.hash || regTx.hash
           }
         }
       } catch (e) {
@@ -111,6 +113,7 @@ export async function POST(request: NextRequest) {
       success: true,
       contractAddress,
       transactionHash: contract.deploymentTransaction()?.hash,
+      registryTxHash,
       deployerAddress: wallet.address,
       networkInfo: {
         chainId: 50312,

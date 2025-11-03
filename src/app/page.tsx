@@ -166,6 +166,16 @@ export default function Home() {
           >
             Explorer ↗
           </a>
+          {process.env.NEXT_PUBLIC_REGISTRY_ADDRESS && (
+            <a 
+              href={`https://shannon-explorer.somnia.network/address/${process.env.NEXT_PUBLIC_REGISTRY_ADDRESS}?tab=index`} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-xs text-gray-400 hover:text-gray-200 transition-colors"
+            >
+              Contract ↗
+            </a>
+          )}
         </div>
       </div>
 
@@ -357,6 +367,9 @@ export default function Home() {
                       addTerminalLog('🚀 Deployment successful!')
                       addTerminalLog(`📍 Contract: ${result.address}`)
                       addTerminalLog(`🔗 Transaction: ${result.transactionHash}`)
+                      if ((result as any).registryTxHash) {
+                        addTerminalLog(`🧾 Registry log tx: ${(result as any).registryTxHash}`)
+                      }
                       showToast('Contract deployed successfully!', 'success')
                     }
                   } else {
@@ -377,6 +390,9 @@ export default function Home() {
                       addTerminalLog('🚀 Deployment successful!')
                       addTerminalLog(`📍 Contract: ${result.contractAddress}`)
                       addTerminalLog(`🔗 Transaction: ${result.transactionHash}`)
+                      if (result.registryTxHash) {
+                        addTerminalLog(`🧾 Registry log tx: ${result.registryTxHash}`)
+                      }
                       showToast('Contract deployed successfully!', 'success')
                     } else {
                       addTerminalLog(`❌ Deployment failed: ${result.error}`)

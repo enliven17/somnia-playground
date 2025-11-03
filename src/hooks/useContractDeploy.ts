@@ -112,12 +112,17 @@ export function useContractDeploy() {
       }
 
       // Ask the server to register deployment using treasury signer (non-blocking)
+      let registryTxHash: string | undefined
       try {
-        await fetch('/api/register', {
+        const regRes = await fetch('/api/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contractAddress: receipt.contractAddress, metadataURI: 'playground:v1' }),
         });
+        const regJson = await regRes.json().catch(() => ({} as any))
+        if (regJson && regJson.success && typeof regJson.txHash === 'string') {
+          registryTxHash = regJson.txHash
+        }
       } catch (e) {
         console.warn('Register API call failed:', e);
       }
@@ -125,6 +130,7 @@ export function useContractDeploy() {
       const result = {
         address: receipt.contractAddress,
         transactionHash: hash,
+        registryTxHash,
         success: true,
         networkInfo: {
           explorerUrl: `https://shannon-explorer.somnia.network/address/${receipt.contractAddress}`,

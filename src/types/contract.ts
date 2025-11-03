@@ -17,6 +17,7 @@ export interface DeploymentResult {
   success: boolean
   contractAddress?: string
   transactionHash?: string
+  registryTxHash?: string
   deployerAddress?: string
   networkInfo?: {
     chainId: number

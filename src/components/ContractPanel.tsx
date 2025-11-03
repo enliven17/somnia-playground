@@ -213,7 +213,8 @@ export default function ContractPanel({
               )}
               
               {deploymentResult.success && deploymentResult.networkInfo && (
-                <div className="flex space-x-2">
+                <div className="flex flex-col space-y-2">
+                  <div className="flex space-x-2">
                   <a
                     href={deploymentResult.networkInfo.explorerUrl}
                     target="_blank"
@@ -230,6 +231,17 @@ export default function ContractPanel({
                       className="flex-1 text-center px-2 py-1 text-xs bg-white/10 hover:bg-white/20 rounded transition-colors"
                     >
                       🔗 Transaction
+                    </a>
+                  )}
+                  </div>
+                  {deploymentResult.registryTxHash && (
+                    <a
+                      href={`https://shannon-explorer.somnia.network/tx/${deploymentResult.registryTxHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-center px-2 py-1 text-xs bg-indigo-500/20 hover:bg-indigo-500/30 rounded transition-colors"
+                    >
+                      🧾 Playground Registry Log Tx
                     </a>
                   )}
                 </div>

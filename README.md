@@ -70,6 +70,12 @@ graph TB
 }
 ```
 
+### Playground Registry (Somnia Testnet)
+
+- Address: `0xf74d5BB4be74715e692ac32b35d631d6b9a8fC49`
+- Explorer: [`Shannon Explorer`](https://shannon-explorer.somnia.network/address/0xf74d5BB4be74715e692ac32b35d631d6b9a8fC49?tab=index)
+
+
 ## Installation
 
 ### Prerequisites

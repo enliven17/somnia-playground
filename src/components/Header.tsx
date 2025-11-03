@@ -5,6 +5,10 @@ import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const registry = process.env.NEXT_PUBLIC_REGISTRY_ADDRESS
+  const registryUrl = registry
+    ? `https://shannon-explorer.somnia.network/address/${registry}?tab=index`
+    : undefined
 
   return (
     <header className="glass-header shadow-lg border-b border-white/20 sticky top-0 z-50">
@@ -43,6 +47,16 @@ export default function Header() {
             >
               Explorer
             </a>
+            {registryUrl && (
+              <a 
+                href={registryUrl}
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-white/90 hover:text-white transition-all duration-300 font-medium hover:scale-105"
+              >
+                Contract
+              </a>
+            )}
             <div className="flex items-center space-x-3 glass rounded-full px-4 py-2">
               <div className="status-online"></div>
               <span className="text-sm text-white font-medium">
