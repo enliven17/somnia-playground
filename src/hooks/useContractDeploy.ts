@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAccount, useWalletClient, usePublicClient } from 'wagmi';
+// Registry registration is handled server-side by treasury signer
 import { parseEther, encodeFunctionData } from 'viem';
 
 interface DeploymentResult {
@@ -108,6 +109,17 @@ export function useContractDeploy() {
 
       if (!receipt?.contractAddress) {
         throw new Error('Contract deployment failed - no contract address returned');
+      }
+
+      // Ask the server to register deployment using treasury signer (non-blocking)
+      try {
+        await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contractAddress: receipt.contractAddress, metadataURI: 'playground:v1' }),
+        });
+      } catch (e) {
+        console.warn('Register API call failed:', e);
       }
 
       const result = {

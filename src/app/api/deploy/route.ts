@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ethers } from 'ethers'
+import { REGISTRY_ADDRESS, REGISTRY_ABI } from '@/constants/registry'
 
 export async function POST(request: NextRequest) {
   try {
@@ -67,6 +68,44 @@ export async function POST(request: NextRequest) {
     // Wait for deployment
     await contract.waitForDeployment()
     const contractAddress = await contract.getAddress()
+
+    // Best-effort on-chain registration with the PlaygroundRegistry
+    // Signed by treasury (server), not by end-user wallet
+    const registryEnv = process.env.NEXT_PUBLIC_REGISTRY_ADDRESS || process.env.REGISTRY_ADDRESS || REGISTRY_ADDRESS
+    if (registryEnv) {
+      try {
+        const treasuryPk = process.env.TREASURY_PRIVATE_KEY || process.env.REGISTRY_SIGNER_PRIVATE_KEY
+        if (!treasuryPk) {
+          console.warn('Registry: missing TREASURY_PRIVATE_KEY; skipping registration')
+        } else {
+          const treasurySigner = new ethers.Wallet(treasuryPk, provider)
+          const rawRegistry = registryEnv.trim()
+          const isHex40 = /^0x[0-9a-fA-F]{40}$/.test(rawRegistry)
+          if (!isHex40 || rawRegistry.toUpperCase() === '0XREGISTRY_ADDRESS_FROM_DEPLOY') {
+            console.warn(`Registry: invalid NEXT_PUBLIC_REGISTRY_ADDRESS value '${rawRegistry}', skipping registration`)
+          } else {
+            const registryAddress = ethers.getAddress(rawRegistry)
+          const deployedAddress = ethers.getAddress(contractAddress.trim())
+            const registry = new ethers.Contract(registryAddress, REGISTRY_ABI, treasurySigner)
+            // Estimate gas with buffer; fallback to 1,000,000
+            let regGas = 1_000_000n
+            try {
+              const est = await registry.registerDeployment.estimateGas(deployedAddress, 'playground:v1')
+              regGas = (est * 150n) / 100n
+            } catch {}
+            const regTx = await registry.registerDeployment(deployedAddress, 'playground:v1', {
+              gasLimit: regGas,
+              maxPriorityFeePerGas,
+              maxFeePerGas,
+            })
+          await regTx.wait()
+          }
+        }
+      } catch (e) {
+        // swallow registry error to not block the main deployment
+        console.warn('Registry registration failed:', e)
+      }
+    }
 
     return NextResponse.json({
       success: true,

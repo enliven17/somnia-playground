@@ -34,6 +34,33 @@ async function main() {
   // Verify contract on explorer (if supported)
   console.log("Contract deployed successfully!");
   console.log("Explorer URL:", `https://shannon-explorer.somnia.network/address/${contractAddress}`);
+
+  // Deploy PlaygroundRegistry
+  const treasury = process.env.TREASURY_ADDRESS;
+  if (!treasury) {
+    console.warn("TREASURY_ADDRESS not set; skipping PlaygroundRegistry deployment.");
+    return;
+  }
+
+  const Registry = await hre.ethers.getContractFactory("PlaygroundRegistry");
+  const regBytecode = Registry.bytecode || "0x";
+  const regByteLen = regBytecode.length > 2 ? Math.floor((regBytecode.length - 2) / 2) : 0;
+  const regPerByte = 3125n;
+  const regCost = BigInt(regByteLen) * regPerByte;
+  const regOverhead = 3_000_000n;
+  const regBuffer = (regCost + regOverhead) / 2n;
+  const regGasLimit = regCost + regOverhead + regBuffer;
+
+  const registry = await Registry.deploy(treasury, {
+    gasLimit: regGasLimit,
+    maxPriorityFeePerGas,
+    maxFeePerGas,
+  });
+  await registry.waitForDeployment();
+  const registryAddress = await registry.getAddress();
+  console.log("PlaygroundRegistry deployed to:", registryAddress);
+  console.log("Registry Tx:", registry.deploymentTransaction().hash);
+  console.log("Registry Explorer:", `https://shannon-explorer.somnia.network/address/${registryAddress}`);
 }
 
 main()
