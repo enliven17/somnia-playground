@@ -43,10 +43,25 @@ export async function POST(request: NextRequest) {
     // Create contract factory
     const contractFactory = new ethers.ContractFactory(abi, bytecode, wallet)
 
-    // Deploy contract
+    // Compute Somnia-aware gas limit
+    // Somnia charges 3125 gas per byte of deployed bytecode
+    const byteLen = (bytecode?.length ?? 2) > 2 ? Math.floor((bytecode.length - 2) / 2) : 0
+    const perByteCost = 3125n
+    const deployBytecodeCost = BigInt(byteLen) * perByteCost
+    // Add larger overhead for constructor execution, logs, storage ops, and cold accesses
+    const overhead = 3_000_000n
+    // Safety buffer (50%) to tolerate cold reads/writes and logs
+    const buffer = (deployBytecodeCost + overhead) / 2n
+    const gasLimit = deployBytecodeCost + overhead + buffer
+
+    // Deploy contract with EIP-1559 fee fields (preferred)
+    const maxPriorityFeePerGas = ethers.parseUnits('2', 'gwei')
+    const maxFeePerGas = ethers.parseUnits('50', 'gwei')
+
     const contract = await contractFactory.deploy({
-      gasLimit: 3000000,
-      gasPrice: ethers.parseUnits('20', 'gwei')
+      gasLimit,
+      maxPriorityFeePerGas,
+      maxFeePerGas
     })
 
     // Wait for deployment
@@ -59,7 +74,7 @@ export async function POST(request: NextRequest) {
       transactionHash: contract.deploymentTransaction()?.hash,
       deployerAddress: wallet.address,
       networkInfo: {
-        chainId: 50311,
+        chainId: 50312,
         networkName: 'Somnia Testnet',
         explorerUrl: `https://shannon-explorer.somnia.network/address/${contractAddress}`,
         txExplorerUrl: `https://shannon-explorer.somnia.network/tx/${contract.deploymentTransaction()?.hash}`

@@ -62,11 +62,31 @@ export function useContractDeploy() {
         throw new Error('No bytecode generated from compilation');
       }
 
-      // Use default gas limit for deployment
-      const gasEstimate = BigInt(3000000); // Default 3M gas
+      // Derive Somnia-aware gas limit
+      // Prefer on-chain estimation; fallback to bytecode-size-based calculation
+      let gasLimit: bigint | undefined;
+      try {
+        gasLimit = await publicClient?.estimateContractGas({
+          abi,
+          bytecode: bytecode as `0x${string}`,
+          account: address,
+          args: [],
+        });
+      } catch {
+        // ignore and fallback below
+      }
 
-      // Add 20% buffer to gas estimate
-      const gasLimit = gasEstimate ? (gasEstimate * BigInt(120)) / BigInt(100) : BigInt(3000000);
+      if (!gasLimit) {
+        const byteLen = (bytecode?.length ?? 2) > 2 ? Math.floor((bytecode.length - 2) / 2) : 0;
+        const perByteCost = 3125n; // Somnia cost per deployed byte
+        const deployBytecodeCost = BigInt(byteLen) * perByteCost;
+        const overhead = 3_000_000n; // constructor/logs/storage + cold access overhead
+        const buffer = (deployBytecodeCost + overhead) / 2n; // +50%
+        gasLimit = deployBytecodeCost + overhead + buffer;
+      } else {
+        // Apply a higher buffer to account for Somnia's higher per-op costs vs ETH
+        gasLimit = (gasLimit * 150n) / 100n; // +50%
+      }
 
       // Deploy contract with estimated gas
       const hash = await walletClient.deployContract({
@@ -75,6 +95,9 @@ export function useContractDeploy() {
         account: address,
         gas: gasLimit,
         args: [], // Constructor arguments (empty for basic contracts)
+        // Supply EIP-1559 fees to avoid legacy gasPrice mismatch
+        maxPriorityFeePerGas: 2n * 10n ** 9n,
+        maxFeePerGas: 50n * 10n ** 9n,
       });
 
       // Wait for transaction receipt

@@ -20,7 +20,9 @@ module.exports = {
       chainId: 50312,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       gasPrice: 20000000000, // 20 gwei
-      gas: 6000000
+      // Let estimation happen and apply a higher multiplier to account for Somnia's
+      // 3125 gas/byte deployment cost and higher log/precompile costs
+      gasMultiplier: 5
     }
   },
   paths: {

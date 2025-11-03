@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import * as solc from 'solc';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 export async function POST(request: NextRequest) {
   try {
-    const { source, contractName } = await request.json();
+    const body = await request.json();
+    const source: string = body.source || body.code;
+    const contractNameProvided: string | undefined = body.contractName;
 
-    if (!source) {
+    if (!source || typeof source !== 'string') {
       return NextResponse.json(
-        { error: 'Source code is required' },
+        { success: false, error: 'Source code is required' },
         { status: 400 }
       );
     }
@@ -21,121 +26,90 @@ export async function POST(request: NextRequest) {
 
     // Extract contract name from source if not provided
     const contractNameMatch = source.match(/contract\s+(\w+)/);
-    const extractedContractName = contractNameMatch ? contractNameMatch[1] : (contractName || 'Contract');
+    const extractedContractName = contractNameMatch ? contractNameMatch[1] : (contractNameProvided || 'Contract');
 
-    try {
-      // Use Remix IDE's compiler API for OpenZeppelin support
-      const compileResponse = await fetch('https://remix-compiler-api.ethereum.org/compile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sources: {
-            'contract.sol': {
-              content: source
-            }
-          },
-          settings: {
-            optimizer: {
-              enabled: true,
-              runs: 200
-            },
-            outputSelection: {
-              '*': {
-                '*': ['abi', 'evm.bytecode.object']
-              }
-            }
+    // Prepare solc input
+    const filename = 'Contract.sol';
+    const input = {
+      language: 'Solidity',
+      sources: {
+        [filename]: { content: source },
+      },
+      settings: {
+        optimizer: { enabled: true, runs: 200 },
+        outputSelection: {
+          '*': {
+            '*': ['abi', 'evm.bytecode.object']
           }
-        })
-      });
-
-      if (!compileResponse.ok) {
-        // Fallback to local compilation without imports
-        return NextResponse.json({
-          success: true,
-          abi: [
-            {
-              "inputs": [],
-              "name": "constructor",
-              "outputs": [],
-              "stateMutability": "nonpayable",
-              "type": "constructor"
-            }
-          ],
-          bytecode: "0x608060405234801561001057600080fd5b50336000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555050",
-          contractName: extractedContractName,
-          message: 'Contract compiled successfully (fallback mode)'
-        });
-      }
-
-      const compileResult = await compileResponse.json();
-
-      // Check for compilation errors
-      if (compileResult.errors) {
-        const errors = compileResult.errors.filter((error: any) => error.severity === 'error');
-        if (errors.length > 0) {
-          return NextResponse.json({
-            success: false,
-            error: errors.map((e: any) => e.formattedMessage || e.message).join('\n')
-          });
         }
       }
+    } as const;
 
-      // Get compiled contract
-      const contractFile = compileResult.contracts?.['contract.sol'];
-      if (!contractFile || !contractFile[extractedContractName]) {
+    function findImports(importPath: string): { contents?: string; error?: string } {
+      try {
+        // Support node_modules (e.g., @openzeppelin/...)
+        const nodeModulesPath = path.join(process.cwd(), 'node_modules', importPath);
+        if (fs.existsSync(nodeModulesPath)) {
+          return { contents: fs.readFileSync(nodeModulesPath, 'utf8') };
+        }
+        // Relative imports next to the file (not used by default editor, but safe)
+        const relativePath = path.join(process.cwd(), importPath);
+        if (fs.existsSync(relativePath)) {
+          return { contents: fs.readFileSync(relativePath, 'utf8') };
+        }
+        return { error: `Import not found: ${importPath}` };
+      } catch (e: any) {
+        return { error: `Import read error: ${e?.message || e}` };
+      }
+    }
+
+    const output = JSON.parse(solc.compile(JSON.stringify(input), { import: findImports }));
+
+    if (output.errors && output.errors.length) {
+      const errors = output.errors.filter((e: any) => e.severity === 'error');
+      if (errors.length > 0) {
         return NextResponse.json({
           success: false,
-          error: `Contract '${extractedContractName}' not found in compilation output`
+          error: errors.map((e: any) => e.formattedMessage || e.message).join('\n')
         });
       }
+    }
 
-      const contract = contractFile[extractedContractName];
-      const abi = contract.abi;
-      const bytecode = '0x' + contract.evm.bytecode.object;
+    const contractFile = output.contracts?.[filename];
+    if (!contractFile) {
+      return NextResponse.json({ success: false, error: 'No contract output produced' });
+    }
 
-      if (!bytecode || bytecode === '0x') {
-        return NextResponse.json({
-          success: false,
-          error: 'No bytecode generated - contract may be abstract or have compilation issues'
-        });
-      }
+    const availableNames = Object.keys(contractFile);
+    const nameToUse = availableNames.includes(extractedContractName)
+      ? extractedContractName
+      : availableNames[0];
 
+    const compiled = contractFile[nameToUse];
+    const abi = compiled.abi;
+    const bytecodeObject = compiled.evm?.bytecode?.object || '';
+    const bytecode = bytecodeObject ? ('0x' + bytecodeObject) : '0x';
+
+    if (!bytecode || bytecode === '0x') {
       return NextResponse.json({
-        success: true,
-        abi: abi,
-        bytecode: bytecode,
-        contractName: extractedContractName,
-        message: 'Contract compiled successfully with OpenZeppelin support'
-      });
-
-    } catch (compileError) {
-      console.error('Compilation error:', compileError);
-      
-      // Fallback response for basic contracts
-      return NextResponse.json({
-        success: true,
-        abi: [
-          {
-            "inputs": [],
-            "name": "constructor",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "constructor"
-          }
-        ],
-        bytecode: "0x608060405234801561001057600080fd5b50336000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555050",
-        contractName: extractedContractName,
-        message: 'Contract compiled successfully (basic mode)'
+        success: false,
+        error: 'No bytecode generated - contract may be abstract or compile failed'
       });
     }
 
-  } catch (error) {
-    console.error('API error:', error);
+    return NextResponse.json({
+      success: true,
+      abi,
+      bytecode,
+      contractName: nameToUse,
+      message: 'Contract compiled successfully (local solc)'
+    });
+
+  } catch (error: any) {
+    console.error('Compilation API error:', error);
     return NextResponse.json({
       success: false,
-      error: 'API error: ' + (error instanceof Error ? error.message : 'Unknown error')
-    });
+      error: 'Compilation failed: ' + (error?.message || String(error))
+    }, { status: 500 });
   }
 }
