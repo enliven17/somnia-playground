@@ -67,11 +67,10 @@ export function useContractDeploy() {
       // Prefer on-chain estimation; fallback to bytecode-size-based calculation
       let gasLimit: bigint | undefined;
       try {
-        gasLimit = await publicClient?.estimateContractGas({
-          abi,
-          bytecode: bytecode as `0x${string}`,
+        // For deployments, estimate using raw transaction data (creation bytecode)
+        gasLimit = await publicClient?.estimateGas({
           account: address,
-          args: [],
+          data: bytecode as `0x${string}`,
         });
       } catch {
         // ignore and fallback below
